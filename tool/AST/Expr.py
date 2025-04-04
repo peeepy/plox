@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import *
 from lox.token import Token
 
 class Visitor(ABC):
@@ -18,6 +18,10 @@ class Visitor(ABC):
 
     @abstractmethod
     def visit_literal_expr(self, expr: Literal) -> Any:
+        pass
+
+    @abstractmethod
+    def visit_logical_expr(self, expr: Logical) -> Any:
         pass
 
     @abstractmethod
@@ -67,6 +71,16 @@ class Literal(Expr):
 
     def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_literal_expr(self)
+
+
+class Logical(Expr):
+    def __init__(self, left: Expr, operator: Token, right: Expr):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
+    def accept(self, visitor: Visitor) -> Any:
+        return visitor.visit_logical_expr(self)
 
 
 class Unary(Expr):

@@ -10,3 +10,9 @@ var a = 1;
   var a = a + 2;
   print a;
 }
+
+print "hi" or 2; // "hi".
+print null or "yes"; // "yes".
+print "test" or null;
+print "test" and 1;
+print 0 and 1;

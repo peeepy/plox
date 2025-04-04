@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import *
 from lox.token import Token
 
 class Visitor(ABC):
@@ -10,6 +10,10 @@ class Visitor(ABC):
 
     @abstractmethod
     def visit_expression_stmt(self, stmt: Expression) -> Any:
+        pass
+
+    @abstractmethod
+    def visit_if_stmt(self, stmt: If) -> Any:
         pass
 
     @abstractmethod
@@ -40,6 +44,16 @@ class Expression(Stmt):
 
     def accept(self, visitor: Visitor) -> Any:
         return visitor.visit_expression_stmt(self)
+
+
+class If(Stmt):
+    def __init__(self, condition: Expr, thenBranch: Stmt, elseBranch: Stmt):
+        self.condition = condition
+        self.thenBranch = thenBranch
+        self.elseBranch = elseBranch
+
+    def accept(self, visitor: Visitor) -> Any:
+        return visitor.visit_if_stmt(self)
 
 
 class Print(Stmt):

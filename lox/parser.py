@@ -35,26 +35,38 @@ class Parser:
         return self.assignment()
 
     def statement(self) -> Stmt.Stmt:
-        if self.match(TokenType.PRINT): return self.printStatement()
+        if self.match(TokenType.IF): return self.if_statement()
+        if self.match(TokenType.PRINT): return self.print_statement()
         if self.match(TokenType.LEFT_BRACE): return Stmt.Block(self.block())
         
-        return self.expressionStatement()
+        return self.expression_statement()
+    
+    def if_statement(self) -> Stmt.Stmt:
+        self.consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
+        condition: Expr.Expr = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expected ')' after if condition.")
+        
+        then_branch: Stmt = self.statement()
+        else_branch: Stmt = None
+        if self.match(TokenType.ELSE): else_branch = self.statement()
+        
+        return Stmt.If(condition, then_branch, else_branch)
     
     def declaration(self) -> Stmt.Stmt:
         try:
-            if self.match(TokenType.VAR): return self.varDeclaration()
+            if self.match(TokenType.VAR): return self.var_declaration()
 
             return self.statement()
         except Parser.ParseError as error:
             self.synchronise()
         
     
-    def printStatement(self) -> Stmt.Stmt:
+    def print_statement(self) -> Stmt.Stmt:
         value: Expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Stmt.Print(value)
 
-    def varDeclaration(self) -> Stmt.Stmt:
+    def var_declaration(self) -> Stmt.Stmt:
         name: Token = self.consume(TokenType.IDENTIFIER, "Expected a variable name.")
         
         initialiser: Expr.Expr = None
@@ -65,7 +77,7 @@ class Parser:
         return Stmt.Var(name, initialiser)
     
     
-    def expressionStatement(self) -> Stmt.Stmt:
+    def expression_statement(self) -> Stmt.Stmt:
         expr: Expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Stmt.Expression(expr)
@@ -80,7 +92,7 @@ class Parser:
         return statements
     
     def assignment(self) -> Expr.Expr:
-        expr: Expr.Expr = self.equality()
+        expr: Expr.Expr = self.logical_or()
 
         if self.match(TokenType.EQUAL):
             equals: Token = self.previous()
@@ -94,8 +106,29 @@ class Parser:
 
         return expr
     
-    # Binary operator methods
+    # Logical operator methods
+    def logical_or(self) -> Expr.Expr:
+        expr: Expr.Expr = self.logical_and()
+        
+        while self.match(TokenType.OR):
+            operator: Token = self.previous()
+            right: Expr.Expr = self.logical_and()
+            expr = Expr.Logical(expr, operator, right)
+            
+        return expr
+    
+    def logical_and(self) -> Expr.Expr:
+        expr: Expr.Expr = self.equality()
 
+        while self.match(TokenType.AND):
+            operator: Token = self.previous()
+            right: Expr.Expr = self.equality()
+            expr = Expr.Logical(expr, operator, right)
+
+        return expr
+    
+    
+    # Binary operator methods
     def equality(self) -> Expr.Expr:
         expr: Expr.Expr = self.comparison()
         

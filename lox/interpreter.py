@@ -45,6 +45,30 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             
         return None
     
+    def visit_logical_expr(self, expr: Expr.Logical) -> object:
+        left: object = self.evaluate(expr.left)
+
+        if expr.operator.token_type is TokenType.OR:
+            # If the left side is truthy, return it immediately (short-circuit).
+            if self.is_truthy(left):
+                return left
+            # Otherwise (left side is falsey), evaluate and return the right side.
+            else:
+                return self.evaluate(expr.right)  # Evaluate the right side
+
+        # --- Handle the AND operator here (assuming you have one) ---
+        elif expr.operator.token_type is TokenType.AND:
+            # If the left side is falsey, return it immediately (short-circuit).
+            if not self.is_truthy(left):
+                return left
+            # Otherwise (left side is truthy), evaluate and return the right side.
+            else:
+                return self.evaluate(expr.right)
+
+        # Should not happen if parser only allows OR/AND for Logical expressions
+        return None  # Or raise an error
+            
+            
     def visit_variable_expr(self, expr: Expr.Variable) -> object:
         return self.environment.get(expr.name)
     
@@ -112,6 +136,14 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def visit_expression_stmt(self, stmt: Stmt.Expression) -> None:
         self.evaluate(stmt.expression)
 
+
+    def visit_if_stmt(self, stmt: Stmt.If) -> None:
+        if self.is_truthy(self.evaluate(stmt.condition)):
+            self.execute(stmt.thenBranch)
+        elif stmt.elseBranch is not None:
+            self.execute(stmt.elseBranch)
+            
+            
     def visit_print_stmt(self, stmt: Stmt.Print) -> None:
         value: object = self.evaluate(stmt.expression)
         print(self.stringify(value))

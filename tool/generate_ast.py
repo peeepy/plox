@@ -1,7 +1,7 @@
 import sys
 from typing import List, Any
 from pathlib import Path
-
+import os
 
 class GenerateAst:
 
@@ -18,13 +18,16 @@ class GenerateAst:
             "Binary   : Expr left, Token operator, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
+            "Logical  : Expr left, Token operator, Expr right",
             "Unary    : Token operator, Expr right",
             "Variable : Token name",
         ]
         GenerateAst.define_ast(output_dir, "Expr", expr_types)
 
-        GenerateAst.define_ast(output_dir, "Stmt", ["Block      : List<Stmt> statements", 
+        GenerateAst.define_ast(output_dir, "Stmt", ["Block      : List[Stmt] statements", 
                                                     "Expression : Expr expression",
+                                                    "If         : Expr condition, Stmt thenBranch," +
+                                                    " Stmt elseBranch",
                                                     "Print      : Expr expression",
                                                     "Var        : Token name, Expr initializer"])
 
@@ -33,10 +36,13 @@ class GenerateAst:
         path = output_dir / f"{base_name}.py"
 
         try:
+            if os.path.exists(path):
+                os.unlink(path)
+                
             with open(path, mode='a', encoding='utf-8') as writer:
                 writer.write("from __future__ import annotations\n")
                 writer.write("from abc import ABC, abstractmethod\n")
-                writer.write("from typing import Any\n")
+                writer.write("from typing import *\n")
                 writer.write("from lox.token import Token\n\n")
 
                 GenerateAst.define_visitor(writer, base_name, types)
