@@ -1,0 +1,6 @@
+print "hello world";
+print true;
+print 2+2;
+
+var testVar = "test";
+print testVar;
