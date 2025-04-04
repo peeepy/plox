@@ -1,6 +1,12 @@
-print "hello world";
-print true;
-print 2+2;
+//print "hello world";
+//print true;
+//print 2+2;
 
-var testVar = "test";
-print testVar;
+//var testVar = "test";
+//print testVar;
+
+var a = 1;
+{
+  var a = a + 2;
+  print a;
+}

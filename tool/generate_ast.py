@@ -23,7 +23,8 @@ class GenerateAst:
         ]
         GenerateAst.define_ast(output_dir, "Expr", expr_types)
 
-        GenerateAst.define_ast(output_dir, "Stmt", ["Expression : Expr expression",
+        GenerateAst.define_ast(output_dir, "Stmt", ["Block      : List<Stmt> statements", 
+                                                    "Expression : Expr expression",
                                                     "Print      : Expr expression",
                                                     "Var        : Token name, Expr initializer"])
 

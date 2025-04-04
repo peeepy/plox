@@ -36,6 +36,7 @@ class Parser:
 
     def statement(self) -> Stmt.Stmt:
         if self.match(TokenType.PRINT): return self.printStatement()
+        if self.match(TokenType.LEFT_BRACE): return Stmt.Block(self.block())
         
         return self.expressionStatement()
     
@@ -68,6 +69,15 @@ class Parser:
         expr: Expr = self.expression()
         self.consume(TokenType.SEMICOLON, "Expect ';' after expression.")
         return Stmt.Expression(expr)
+    
+    def block(self) -> List[Stmt.Stmt]:
+        statements: List[Stmt.Stmt] = []
+        
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            statements.append(self.declaration())
+            
+        self.consume(TokenType.RIGHT_BRACE, "Expected '}' to finish block.")
+        return statements
     
     def assignment(self) -> Expr.Expr:
         expr: Expr.Expr = self.equality()

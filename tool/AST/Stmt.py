@@ -5,6 +5,10 @@ from lox.token import Token
 
 class Visitor(ABC):
     @abstractmethod
+    def visit_block_stmt(self, stmt: Block) -> Any:
+        pass
+
+    @abstractmethod
     def visit_expression_stmt(self, stmt: Expression) -> Any:
         pass
 
@@ -21,6 +25,14 @@ class Stmt(ABC):
     @abstractmethod
     def accept(self, visitor: Visitor) -> Any:
         pass
+
+class Block(Stmt):
+    def __init__(self, statements: List[Stmt]):
+        self.statements = statements
+
+    def accept(self, visitor: Visitor) -> Any:
+        return visitor.visit_block_stmt(self)
+
 
 class Expression(Stmt):
     def __init__(self, expression: Expr):
