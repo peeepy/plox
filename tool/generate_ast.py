@@ -29,7 +29,8 @@ class GenerateAst:
                                                     "If         : Expr condition, Stmt thenBranch," +
                                                     " Stmt elseBranch",
                                                     "Print      : Expr expression",
-                                                    "Var        : Token name, Expr initializer"])
+                                                    "Var        : Token name, Expr initializer",
+                                                    "While      : Expr condition, Stmt body"])
 
     @staticmethod
     def define_ast(output_dir: Path, base_name: str, types: List[str]) -> None:

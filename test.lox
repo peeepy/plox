@@ -5,14 +5,23 @@
 //var testVar = "test";
 //print testVar;
 
-var a = 1;
-{
-  var a = a + 2;
-  print a;
-}
+//var a = 1;
+//{
+  //var a = a + 2;
+  //print a;
+//}
 
-print "hi" or 2; // "hi".
-print null or "yes"; // "yes".
-print "test" or null;
-print "test" and 1;
-print 0 and 1;
+//print "hi" or 2; // "hi".
+//print null or "yes"; // "yes".
+//print "test" or null;
+//print "test" and 1;
+//print 0 and 1;
+
+var a = 0;
+var temp;
+print "Printing fibonacci sequence";
+for (var b = 1; a < 10000; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
+}

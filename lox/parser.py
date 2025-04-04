@@ -35,11 +35,59 @@ class Parser:
         return self.assignment()
 
     def statement(self) -> Stmt.Stmt:
+        if self.match(TokenType.FOR):
+            return self.for_statement()
         if self.match(TokenType.IF): return self.if_statement()
         if self.match(TokenType.PRINT): return self.print_statement()
+        if self.match(TokenType.WHILE): return self.while_statement()
         if self.match(TokenType.LEFT_BRACE): return Stmt.Block(self.block())
         
         return self.expression_statement()
+    
+
+    def for_statement(self) -> Stmt.Stmt:
+        self.consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.")
+
+        # Initialiser
+        initialiser: Stmt.Stmt = None
+        if self.match(TokenType.SEMICOLON):
+            initialiser = None
+        elif self.match(TokenType.VAR):
+            initialiser = self.var_declaration()
+        else:
+            initialiser = self.expression_statement()
+
+        # Condition
+        condition: Expr.Expr = None
+        if not self.check(TokenType.SEMICOLON):
+            condition = self.expression()
+        self.consume(TokenType.SEMICOLON, "Expected ';' after loop condition.")
+
+        # Increment
+        increment: Expr.Expr = None
+        if not self.check(TokenType.RIGHT_PAREN):
+            increment = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expected ')' after for clauses.")
+
+        # Body
+        body: Stmt.Stmt = self.statement()
+
+        # Desugaring: Transform for loop into equivalent while loop structure
+
+        # Increment
+        if increment is not None:
+            body = Stmt.Block([body, Stmt.Expression(increment)])
+
+        # Condition
+        if condition is None:
+            condition = Expr.Literal(True)
+        body = Stmt.While(condition, body)
+
+        # Initialiser
+        if initialiser is not None:
+            body = Stmt.Block([initialiser, body])
+
+        return body
     
     def if_statement(self) -> Stmt.Stmt:
         self.consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
@@ -75,6 +123,14 @@ class Parser:
         
         self.consume(TokenType.SEMICOLON, "Expected ';' after variable declaration.")
         return Stmt.Var(name, initialiser)
+    
+    def while_statement(self) -> Stmt.Stmt:
+        self.consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
+        condition: Expr.Expr = self.expression()
+        self.consume(TokenType.RIGHT_PAREN, "Expected ')' after 'condition'.")
+        body: Stmt.Stmt = self.statement()
+        
+        return Stmt.While(condition, body)
     
     
     def expression_statement(self) -> Stmt.Stmt:
