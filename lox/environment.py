@@ -1,5 +1,5 @@
 from lox.token import Token
-from lox.runtime_error import RuntimeException
+from lox.errors.runtime_error import RuntimeException
 from typing import Optional
 
 class Environment:
@@ -9,7 +9,20 @@ class Environment:
     
     def define(self, name: str, value: object) -> None:
         self.values[name] = value
-        
+    
+    def ancestor(self, distance: int):
+        environment = self
+        for i in range(distance):
+            environment = environment.enclosing
+
+        return environment
+    
+    def get_at(self, distance: int, name: str) -> object:
+        return self.ancestor(distance).values[name]
+    
+    def assign_at(self, distance: int, name: Token, value: object) -> None:
+        self.ancestor(distance).values[name.lexeme] = value
+    
     def get(self, name: Token) -> object:
         if name.lexeme in self.values:
             return self.values[name.lexeme]

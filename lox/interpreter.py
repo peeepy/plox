@@ -1,20 +1,21 @@
 from tool.AST import Stmt, Expr
 from lox.token_type import TokenType
 from lox.token import Token
-from lox.runtime_error import RuntimeException
+from lox.errors.runtime_error import RuntimeException
 from typing import List
 from lox.environment import Environment
 import time
 from lox.lox_callable import LoxCallable
 from lox.lox_function import LoxFunction
 from lox.native_functions import define_native_functions
-from lox.return_error import Return
+from lox.errors.return_error import Return
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, error_reporter):
         self.error_reporter = error_reporter
         self.global_vars: Environment = Environment()
         self.environment: Environment = self.global_vars
+        self.locals = {}
         
         # Register all native functions
         define_native_functions(self.global_vars)
@@ -79,7 +80,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             
             
     def visit_variable_expr(self, expr: Expr.Variable) -> object:
-        return self.environment.get(expr.name)
+        return self.lookup_variable(expr.name, expr)
+    
+    def lookup_variable(self, name: Token, expr: Expr.Expr) -> object:
+        distance: int = self.locals[expr]
+        
+        if distance is not None:
+            return self.environment.get_at(distance, name.lexeme)
+        else:
+            return self.global_vars[name]
     
     
     def check_number_operand(self, operator: Token, operand: object) -> None:
@@ -119,12 +128,19 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def visit_grouping_expr(self, expr: Expr.Grouping) -> object:
         return self.evaluate(expr.expression)
     
+    
     def evaluate(self, expr: Expr.Expr) -> object:
         return expr.accept(self)
+    
     
     def execute(self, stmt: Stmt.Stmt) -> None:
         stmt.accept(self)
     
+    
+    def resolve(self, expr: Expr.Expr, depth: int) -> None:
+        self.locals[expr] = depth
+        
+        
     def execute_block(self, statements: List[Stmt.Stmt], environment: Environment) -> None:
         previous: Environment = self.environment
         
@@ -182,7 +198,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         
     def visit_assign_expr(self, expr: Expr.Assign) -> object:
         value: object = self.evaluate(expr.value)
-        self.environment.assign(expr.name, value)
+        distance: int = self.locals[expr]
+        
+        if distance is not None:
+            self.environment.assign_at(expr.name, value)
+        else:
+            self.global_vars.assign(expr.name, value)
+            
         return value
 
 

@@ -4,10 +4,11 @@ from typing import *
 from lox.token import Token
 from lox.scanner import Scanner
 from lox.parser import Parser
+from lox.resolver import Resolver
 from tool.AST.Stmt import Stmt
 from lox.ast_printer import AstPrinter
 from lox.interpreter import Interpreter
-from lox.runtime_error import RuntimeException
+from lox.errors.runtime_error import RuntimeException
 
 
 class Lox:
@@ -16,18 +17,30 @@ class Lox:
         self.had_runtime_error: bool = False
         self.interpreter = Interpreter(self.runtime_error)
 
+
     def run(self, source: str, is_repl: bool = False) -> None:
         scanner = Scanner(source, self.error)
         tokens: List[Token] = scanner.scan_tokens()
         parser: Parser = Parser(tokens, self.error)
         statements: List[Stmt] = parser.parse()
-        
+
         # Only exit if not in REPL mode
         if not is_repl:
             if self.had_error:
                 sys.exit(65)
             if self.had_runtime_error:
                 sys.exit(70)
+
+        # Stop if there was a syntax error.
+        if self.had_error:
+            return
+
+        resolver: Resolver = Resolver(self.interpreter, self.error)
+        resolver.resolve(statements)
+
+        # Stop if there was a resolution error
+        if self.had_error:
+            return
 
         if statements is not None:
             self.interpreter.interpret(statements)
