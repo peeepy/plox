@@ -6,6 +6,7 @@ from typing import List
 from lox.environment import Environment
 import time
 from lox.lox_callable import LoxCallable
+from lox.lox_class import LoxClass
 from lox.lox_function import LoxFunction
 from lox.native_functions import define_native_functions
 from lox.errors.return_error import Return
@@ -83,12 +84,11 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         return self.lookup_variable(expr.name, expr)
     
     def lookup_variable(self, name: Token, expr: Expr.Expr) -> object:
-        distance: int = self.locals[expr]
-        
-        if distance is not None:
-            return self.environment.get_at(distance, name.lexeme)
-        else:
-            return self.global_vars[name]
+        if expr in self.locals:
+            distance = self.locals[expr]
+            if distance is not None:
+                return self.environment.get_at(distance, name.lexeme)
+        return self.global_vars.get(name)
     
     
     def check_number_operand(self, operator: Token, operand: object) -> None:
@@ -156,7 +156,12 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def visit_block_stmt(self, stmt: Stmt.Block) -> None:
         self.execute_block(stmt.statements, Environment(self.environment))
         
-        
+    def visit_class_stmt(self, stmt: Stmt.Class) -> None:
+        self.environment.define(stmt.name.lexeme, None)
+        klass = LoxClass(stmt.name.lexeme)
+        self.environment.assign(stmt.name, klass)
+    
+    
     # Statement visitor implementations
     def visit_expression_stmt(self, stmt: Stmt.Expression) -> None:
         self.evaluate(stmt.expression)
@@ -201,7 +206,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         distance: int = self.locals[expr]
         
         if distance is not None:
-            self.environment.assign_at(expr.name, value)
+            self.environment.assign_at(distance, expr.name, value)
         else:
             self.global_vars.assign(expr.name, value)
             

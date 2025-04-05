@@ -53,4 +53,17 @@ counter(); // "1".
 counter(); // "2".
 
 // Resolving and Binding
-return "return test";
+//return "return test";
+
+// Classes
+class DevonshireCream {
+  serveOn() {
+    return "Scones";
+  }
+}
+
+print DevonshireCream; // Prints "DevonshireCream".
+
+class Bagel {}
+var bagel = Bagel();
+print bagel; // Prints "Bagel instance".

@@ -26,6 +26,7 @@ class GenerateAst:
         GenerateAst.define_ast(output_dir, "Expr", expr_types)
 
         GenerateAst.define_ast(output_dir, "Stmt", ["Block      : List[Stmt] statements", 
+                                                    "Class      : Token name, List[Stmt.Function] methods",
                                                     "Expression : Expr expression",
                                                     "Function   : Token name, List[Token] params," +
                                                     " List[Stmt] body",

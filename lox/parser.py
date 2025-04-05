@@ -115,6 +115,8 @@ class Parser:
     
     def declaration(self) -> Stmt.Stmt:
         try:
+            if self.match(TokenType.CLASS):
+                return self.class_declaration()
             if self.match(TokenType.VAR): return self.var_declaration()
             if self.match(TokenType.FUN):
                 return self.function("function")
@@ -123,10 +125,21 @@ class Parser:
         except Parser.ParseError as error:
             self.synchronise()
         
-    
+    def class_declaration(self) -> None:
+        name = self.consume(TokenType.IDENTIFIER, "Expected class name.")
+        self.consume(TokenType.LEFT_BRACE, "Expected '{' before class body.")
+
+        methods = []
+        while not self.check(TokenType.RIGHT_BRACE) and not self.is_at_end():
+            methods.append(self.function("method"))
+
+        self.consume(TokenType.RIGHT_BRACE, "Expected '}' after class body.")
+
+        return Stmt.Class(name, methods)
+
     def print_statement(self) -> Stmt.Stmt:
         value: Expr = self.expression()
-        self.consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        self.consume(TokenType.SEMICOLON, "Expected ';' after value.")
         return Stmt.Print(value)
 
     def var_declaration(self) -> Stmt.Stmt:
