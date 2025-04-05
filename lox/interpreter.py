@@ -4,11 +4,20 @@ from lox.token import Token
 from lox.runtime_error import RuntimeException
 from typing import List
 from lox.environment import Environment
+import time
+from lox.lox_callable import LoxCallable
+from lox.lox_function import LoxFunction
+from lox.native_functions import define_native_functions
+from lox.return_error import Return
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     def __init__(self, error_reporter):
         self.error_reporter = error_reporter
-        self.environment: Environment = Environment()
+        self.global_vars: Environment = Environment()
+        self.environment: Environment = self.global_vars
+        
+        # Register all native functions
+        define_native_functions(self.global_vars)
     
     def interpret(self, statements: List[Stmt]) -> None:
         try:
@@ -136,6 +145,9 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def visit_expression_stmt(self, stmt: Stmt.Expression) -> None:
         self.evaluate(stmt.expression)
 
+    def visit_function_stmt(self, stmt: Stmt.Function) -> None:
+        function: LoxFunction = LoxFunction(stmt)
+        self.environment.define(stmt.name.lexeme, function)
 
     def visit_if_stmt(self, stmt: Stmt.If) -> None:
         if self.is_truthy(self.evaluate(stmt.condition)):
@@ -147,6 +159,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     def visit_print_stmt(self, stmt: Stmt.Print) -> None:
         value: object = self.evaluate(stmt.expression)
         print(self.stringify(value))
+    
+    def visit_return_stmt(self, stmt: Stmt.Return) -> None:
+        value: object = None
+        if stmt.value is not None: value = self.evaluate(stmt.value)
+        
+        raise Return(value)
+    
     
     def visit_var_stmt(self, stmt: Stmt.Var) -> None:
         value: object = None
@@ -223,3 +242,24 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             case TokenType.EQUAL_EQUAL: return self.is_equal(left, right)
             
         return None
+    
+
+    def visit_call_expr(self, expr: Expr.Call) -> object:
+        callee: object = self.evaluate(expr.callee)
+
+        arguments: List[object] = []
+        for argument in expr.arguments:
+            arguments.append(self.evaluate(argument))
+
+        if not isinstance(callee, LoxCallable):
+            raise RuntimeException(
+                "You can only call functions and classes.", expr.paren)
+
+        function: LoxCallable = callee
+
+        # Check arity after we have the function and arguments
+        if len(arguments) != function.arity():
+            raise RuntimeError(
+                f"Expected {function.arity()} arguments but got {len(arguments)}.")
+
+        return function.call(self, arguments)
