@@ -60,24 +60,17 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         left: object = self.evaluate(expr.left)
 
         if expr.operator.token_type is TokenType.OR:
-            # If the left side is truthy, return it immediately (short-circuit).
             if self.is_truthy(left):
                 return left
-            # Otherwise (left side is falsey), evaluate and return the right side.
-            else:
-                return self.evaluate(expr.right)  # Evaluate the right side
-
-        # --- Handle the AND operator here (assuming you have one) ---
-        elif expr.operator.token_type is TokenType.AND:
-            # If the left side is falsey, return it immediately (short-circuit).
-            if not self.is_truthy(left):
-                return left
-            # Otherwise (left side is truthy), evaluate and return the right side.
             else:
                 return self.evaluate(expr.right)
 
-        # Should not happen if parser only allows OR/AND for Logical expressions
-        return None  # Or raise an error
+        elif expr.operator.token_type is TokenType.AND:
+            if not self.is_truthy(left):
+                return left
+            else:
+                return self.evaluate(expr.right)
+        return None
             
             
     def visit_variable_expr(self, expr: Expr.Variable) -> object:
@@ -102,20 +95,17 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     
     
     def is_truthy(self, obj: object) -> bool:
-        if obj is None:       # Check for Lox null (Python None)
+        if obj is None:
             return False
-        if isinstance(obj, bool):  # Check for Booleans
-            return obj            # Return True or False directly
-        if isinstance(obj, (int, float)):  # Check for numbers
-            return obj != 0       # Zero is falsey, non-zero is truthy
-        if isinstance(obj, str):  # Check for strings
-            return len(obj) > 0   # Empty string is falsey
-        # Add checks for other Lox types if necessary (e.g., functions, classes later)
-        # Lox doesn't typically have lists/dicts built-in like Python,
-        # so checking numeric zero and empty string covers most Python-like cases
-        # relevant to standard Lox.
+        if isinstance(obj, bool):
+         # Return True or False directly
+            return obj
+        if isinstance(obj, (int, float)):
+            return obj != 0
+        if isinstance(obj, str):
+            return len(obj) > 0 
 
-        return True  # Everything else defaults to truthy
+        return True
 
     def is_equal(self, a: object, b: object) -> bool:
         if a is None and b is None:
@@ -284,7 +274,6 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         function: LoxCallable = callee
 
-        # Check arity after we have the function and arguments
         if len(arguments) != function.arity():
             raise RuntimeError(
                 f"Expected {function.arity()} arguments but got {len(arguments)}.")
